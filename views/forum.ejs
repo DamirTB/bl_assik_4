@@ -1,0 +1,52 @@
+<!-- posts.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List of Posts</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container {
+            margin-top: 20px; 
+            padding: 20px;
+        }
+    </style>
+</head>
+<nav class="navbar navbar-expand-lg navbar-light" style="background-color: #e3f2fd;">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">Home</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="/Dashboard">dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/registration">Registration</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/sign-out">Sign out</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+</nav>
+<body>
+    <div class="container">
+        <h1>List of Posts</h1>
+        <% posts.forEach(post => { %>
+        <div class="shadow-lg p-5 my-5 rounded">
+            <h2><%= post.name %></h2>
+            <h3> Created by <%= post.author %> </h3>
+            <p> <%= post.text %> </p>
+            <a href="/post/<%= post.id %>" class="white-text btn btn-outline-secondary">View</a>
+        </div>
+        <% }); %>
+    </div>
+    <!-- Bootstrap JS (optional) -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
