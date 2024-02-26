@@ -36,14 +36,12 @@
 </nav>
 <body>
     <div class="container">
-        <h1>List of Users</h1>
-        <% users.forEach(user => { %>
-            <% if (user.username !== cur) { %>
-                <div class="shadow-lg p-5 my-5 rounded">
-                    <h2><%= user.username %></h2>
-                    <a href="/users/<%= user.id %>" class="white-text btn btn-outline-secondary">Accept</a>
+        <h1>Your requests</h1>
+        <% requests.forEach(request => { %>
+            <div class="shadow-lg p-5 my-5 rounded">
+                <h2><%= request.user_sender %></h2>
+                <a href="/request/<%= request.id %>" class="white-text btn btn-outline-secondary">View</a>
             </div>
-            <% } %>
         <% }); %>
     </div>
     <!-- Bootstrap JS (optional) -->

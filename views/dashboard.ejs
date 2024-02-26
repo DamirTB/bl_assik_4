@@ -25,7 +25,7 @@
             <a class="nav-link active" aria-current="page" href="/Dashboard">dashboard</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/registration">Registration</a>
+            <a class="nav-link" href="/forum">Forum</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="/sign-out">Sign out</a>
@@ -36,6 +36,13 @@
 </nav>
 <body>
     <div class="container">
+        <% if (wallet == null) { %> 
+          <form id="myForm" action="/test" method="post">
+            <!-- Hidden input field for the user address -->
+            <input type="hidden" id="userAddressInput" name="wallet">
+            <button type="button" onclick="authorizeAndPost()" class="btn btn-primary">Authorize Metamask and Post</button>
+          </form>
+        <% } %>
         <h1>Welcome to the Dashboard, <%= username %>!</h1>
         <form action="/post" method="post">
             <label for="name">Write a title</label>
@@ -45,6 +52,37 @@
             <button type="submit" class="btn btn-primary">Create</button>
         </form>
     </div>
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
+    <script>
+      async function authorizeMetamask() {
+        if (typeof window.ethereum !== 'undefined') {
+            try {
+                // Request user authorization
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const userAddress = accounts[0]; // User's Ethereum address
+
+                // Set the value of the hidden input field with the user address
+                document.getElementById('userAddressInput').value = userAddress;
+                
+                // Submit the form
+                document.getElementById('myForm').submit();
+            } catch (error) {
+                console.error("Authorization error:", error);
+            }
+        } else {
+            // Metamask is not installed
+            console.error("Metamask is not installed");
+        }
+    }
+    async function authorizeAndPost() {
+        try {
+            // Authorize Metamask
+            await authorizeMetamask();
+        } catch (error) {
+            console.error('Error while authorizing Metamask and posting:', error);
+        }
+    }
+    </script>
 </body>
 </html>
 

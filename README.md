@@ -13,8 +13,7 @@ CREATE TABLE User (
 CREATE TABLE Friendship (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_1 VARCHAR(255) NOT NULL,
-    user_2 VARCHAR(255) NOT NULL,
-    accepted BOOLEAN DEFAULT FALSE
+    user_2 VARCHAR(255) NOT NULL
 );
 ```
 
@@ -24,5 +23,14 @@ CREATE TABLE posts (
     title VARCHAR(255) NOT NULL,
     text TEXT NOT NULL,
     author VARCHAR(255) NOT NULL
+);
+```
+
+```
+CREATE TABLE requests (
+    id SERIAL PRIMARY KEY,
+    user_receiver VARCHAR(255) NOT NULL,
+    user_sender VARCHAR(255) NOT NULL,
+    CONSTRAINT unique_request UNIQUE (user_receiver, user_sender)
 );
 ```

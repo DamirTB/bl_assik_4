@@ -39,17 +39,109 @@ const loginRequired = (req, res, next) => {
 
 const templates = path.join(__dirname, 'templates');
 
-// app.get('/', async (req, res) => {
-//     try {
-//         const client = await pool.connect();
-//         const result = await client.query('SELECT 1');
-//         res.send('Connected to the database!');
-//         client.release();
-//     } catch (err) {
-//         console.error('Error connecting to the database', err);
-//         res.status(500).send('Error connecting to the database');
-//     }
-// });
+app.get('/users', loginRequired, async (req, res) => {
+  try {
+      const query = `
+          SELECT u.id, u.username
+          FROM "users" u
+          LEFT JOIN friendship f ON u.username = f.user_2
+          WHERE f.user_1 IS NULL OR f.user_1 != $1;
+      `;
+      const values = [req.session.user.username]; // Assuming user information is stored in session
+      const { rows } = await pool.query(query, values);
+      const reversedRows = rows.reverse(); // Reverse the order of retrieved users
+      res.render('users', { users: reversedRows, cur : req.session.user.username});
+  }catch(error){
+      console.error('Error fetching users:', error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/request', loginRequired, async (req, res) => {
+  try {
+      const query = `SELECT * FROM requests WHERE user_receiver = $1;`;
+      const values = [req.session.user.username]; 
+      const { rows } = await pool.query(query, values);
+      res.render('request', { requests: rows });
+  } catch (error) {
+      console.error('Error fetching requests:', error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
+
+app.get('/users/:id', loginRequired, async (req, res) => {
+  try {
+      const userId = req.params.id;
+      const query = `SELECT username FROM users WHERE id = $1;`;
+      const values = [userId];
+      const { rows } = await pool.query(query, values);
+      if (rows.length === 0) {
+          return res.status(404).send('User not found');
+      }
+      const username_receiver = rows[0].username;
+      const username_sender = req.session.user.username
+      const new_query = `INSERT INTO requests (user_receiver, user_sender) VALUES ($1, $2);`;
+      const new_values = [username_receiver, username_sender];
+      await pool.query(new_query, new_values);
+      res.send('Request sent successfully!');
+  } catch (error) {
+      console.error('Error fetching user:', error);
+      res.redirect('/users')
+      //res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/request/:id', loginRequired, async(req, res) => {
+  try{
+    const requestId = req.params.id
+    const query = `SELECT user_sender FROM requests WHERE id = $1;`;
+    const values = [requestId];
+    const { rows } = await pool.query(query, values);
+    if (rows.length === 0) {
+      return res.status(404).send('User not found');
+    }
+    const user_sender = rows[0].user_sender;
+    const user_receiver = req.session.user.username;
+    const new_query = `
+            INSERT INTO Friendship (user_1, user_2)
+            VALUES ($1, $2);
+        `;
+    const new_values_1 = [user_sender, user_receiver];
+    const new_values_2 = [user_receiver, user_sender];
+    await pool.query(new_query, new_values_1);
+    await pool.query(new_query, new_values_2);
+    const delete_query = `DELETE FROM requests WHERE id = $1;`;
+    await pool.query(delete_query, [requestId]);
+    res.send('Friendship added');
+  }catch (error){
+    console.error('Error with request:', error);
+    //res.redirect('/users')
+    res.status(500).send('Internal Server Error');
+  }
+})
+
+app.post('/test', loginRequired, async(req, res) => {
+  const wallet = req.body.wallet;
+  const username = req.session.user.username;
+  if(req.session.user.wallet_address == null){
+    const updateQuery = 'UPDATE users SET wallet_address = $1 WHERE username = $2';
+    const updateValues = [wallet, username];
+    try{
+      const updateResult = await pool.query(updateQuery, updateValues);
+      if (updateResult.rowCount === 1) {
+        // Wallet address updated successfully
+        console.log('Wallet address updated successfully');
+        res.send('Wallet address updated successfully');
+    } else {
+        res.status(404).send('User not found');
+      }
+    }catch (error) {
+      console.error('Error updating wallet address:', error);
+      res.status(500).send('Error updating wallet address');
+    }
+  }
+})
 
 app.get('/', async(req, res)=>{
     res.sendFile(path.join(templates + '/index.html'));
@@ -59,7 +151,7 @@ app.get('/dashboard', loginRequired, async (req, res) => {
     try {
       const username = req.session.user.username;
       const wallet = req.session.user.wallet_address;
-      console.log(wallet)
+      const password = req.session.user.password
       res.render('dashboard', { username: username, wallet : wallet});
     } catch (error) {
       console.error(error);
@@ -216,6 +308,17 @@ app.post('/post', loginRequired, async (req, res) => {
     console.error(error);
     res.status(500).send('Error inserting posts');
   }
+});
+
+app.get('/sign-out', loginRequired, (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('Error');
+    } else {
+      res.redirect('/sign-in');
+    }
+  });
 });
 
 app.listen(port, () => {
